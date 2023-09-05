@@ -4,6 +4,7 @@
 ## then add their variable names to the list below
 declare -A Pi_A=( 
     [ip_address]="192.168.0.116" 
+    [alt_ip]="" 
     [con_code]="a" 
     [username]="timbo" 
     [pi_name]="AngelPi" 
@@ -14,6 +15,7 @@ declare -A Pi_A=(
 
 declare -A Pi_B=( 
     [ip_address]="192.168.0.117" 
+    [alt_ip]="" 
     [con_code]="b" 
     [username]="timbo" 
     [pi_name]="BostonCreamPi" 
@@ -24,6 +26,7 @@ declare -A Pi_B=(
 
 declare -A Pi_C=( 
     [ip_address]="192.168.0.118" 
+    [alt_ip]="" 
     [con_code]="c" 
     [username]="timbo" 
     [pi_name]="ChickenPotPi" 
@@ -34,6 +37,7 @@ declare -A Pi_C=(
 
 declare -A Pi_D=( 
     [ip_address]="192.168.0.119" 
+    [alt_ip]="" 
     [con_code]="d" 
     [username]="timbo" 
     [pi_name]="DerbyPi" 
@@ -44,6 +48,7 @@ declare -A Pi_D=(
 
 declare -A Pi_E=( 
     [ip_address]="192.168.0.120" 
+    [alt_ip]="" 
     [con_code]="e" 
     [username]="timbo" 
     [pi_name]="EskimoPi" 
@@ -69,11 +74,17 @@ declare -A selected_pi=(
     )
 
 declare unformatted_output=""
-
 use_sftp=false
 use_sftpr=false
+alt_mode=false
+
 for inp in "$@"
 do
+    if [ "$inp" = "-a" ]
+    then
+        alt_mode=true
+    fi
+
     if [ "$inp" = "-fr" ]
     then
         use_sftpr=true
@@ -91,7 +102,10 @@ then
     echo -e "\nEnter a letter to SFTP into Raspberry Pi"
 else
     echo -e "\nEnter a letter to SSH into Raspberry Pi"
-    echo -e "You can also restart with -f to use SFTP, or -fr to use SFTP with Recursive mode on"
+    echo -e "You can also restart with the following arguments:"
+    echo -e "    -f to use SFTP"
+    echo -e "    -fr to use SFTP with recursive mode on"
+    echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
 fi
 
 echo ""
@@ -100,9 +114,17 @@ do
     declare -n this_pi="$pi"
     unformatted_output+=" | ""${this_pi[con_code]}"" | "
     unformatted_output+="${this_pi[pi_name]}"" | "
-    unformatted_output+="${this_pi[ip_address]}"" | "
+
+    if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
+    then
+        unformatted_output+="${this_pi[alt_ip]}""* | "
+    else
+        unformatted_output+="${this_pi[ip_address]}"" | "
+    fi
+
     unformatted_output+="${this_pi[pi_model]}"" | "
     unformatted_output+="${this_pi[pi_os]}"" | "
+
     if [ ! -z "${this_pi[pi_info]}" ]
     then
         unformatted_output+="${this_pi[pi_info]}"" | "
@@ -126,7 +148,14 @@ do
         then
             selected_pi[con_code]="${this_pi[con_code]}"
             selected_pi[username]="${this_pi[username]}"
-            selected_pi[ip_address]="${this_pi[ip_address]}"
+
+            if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
+            then
+                selected_pi[ip_address]="${this_pi[alt_ip]}"
+            else
+                selected_pi[ip_address]="${this_pi[ip_address]}"
+            fi
+
             selected_pi[pi_name]="${this_pi[pi_name]}"
             selected_pi[pi_model]="${this_pi[pi_model]}"
             selected_pi[pi_os]="${this_pi[pi_os]}"
