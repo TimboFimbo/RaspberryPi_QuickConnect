@@ -78,6 +78,7 @@ use_sftp=false
 use_sftpr=false
 alt_mode=false
 quick_mode=false
+compact_mode=false
 any_pi_online=false
 
 for inp in "$@"
@@ -90,6 +91,11 @@ do
     if [ "$inp" = "-q" ]
     then
         quick_mode=true
+    fi
+
+    if [ "$inp" = "-c" ]
+    then
+        compact_mode=true
     fi
 
     if [ "$inp" = "-fr" ]
@@ -107,6 +113,7 @@ echo -e "    -f to use SFTP (for file transfers)"
 echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
 echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
 echo -e "    -q to use quick mode (won't check for Pi online status)"
+echo -e "    -c to use compact mode (limited table info, good for small screens)"
 
 if [ "$quick_mode" = false ]
 then
@@ -124,7 +131,10 @@ do
 
     if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
     then
-        unformatted_output+="${this_pi[alt_ip]}""* | "
+        if [ "$compact_mode" = false ]
+        then
+            unformatted_output+="${this_pi[alt_ip]}""* | "
+        fi
         if [ "$quick_mode" = false ]
         then
             if ping -c 1 "${this_pi[alt_ip]}" &> /dev/null
@@ -134,7 +144,10 @@ do
             fi
         fi
     else
-        unformatted_output+="${this_pi[ip_address]}"" | "
+        if [ "$compact_mode" = false ]
+        then
+            unformatted_output+="${this_pi[ip_address]}"" | "
+        fi
         if [ "$quick_mode" = false ]
         then
             if ping -c 1 "${this_pi[ip_address]}" &> /dev/null
@@ -145,15 +158,18 @@ do
         fi
     fi
 
-    unformatted_output+="${this_pi[pi_model]}"" | "
-    unformatted_output+="${this_pi[pi_os]}"" | "
+    if [ "$compact_mode" = false ]
+    then
+        unformatted_output+="${this_pi[pi_model]}"" | "
+        unformatted_output+="${this_pi[pi_os]}"" | "
+    fi
 
     if [ "$quick_mode" = false ]
     then
         unformatted_output+="$pi_online"" | "
     fi
 
-    if [ ! -z "${this_pi[pi_info]}" ]
+    if [ "$compact_mode" = false -a -n "${this_pi[pi_info]}" ]
     then
         unformatted_output+="${this_pi[pi_info]}"" | "
     fi
