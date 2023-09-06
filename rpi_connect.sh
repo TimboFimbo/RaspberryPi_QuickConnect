@@ -77,6 +77,7 @@ declare unformatted_output=""
 use_sftp=false
 use_sftpr=false
 alt_mode=false
+quick_mode=false
 any_pi_online=false
 
 for inp in "$@"
@@ -84,6 +85,11 @@ do
     if [ "$inp" = "-a" ]
     then
         alt_mode=true
+    fi
+
+    if [ "$inp" = "-q" ]
+    then
+        quick_mode=true
     fi
 
     if [ "$inp" = "-fr" ]
@@ -97,10 +103,15 @@ done
 
 echo -e "\nWelcome to Raspberry Pi Quick Connect"
 echo -e "You can start the progran with the following arguments:"
-echo -e "    -f to use SFTP"
-echo -e "    -fr to use SFTP with recursive mode on"
+echo -e "    -f to use SFTP (for file transfers)"
+echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
 echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
-echo -e "\nChecking for online status... List will populate when complete..."
+echo -e "    -q to use quick mode (won't check for Pi online status)"
+
+if [ "$quick_mode" = false ]
+then
+    echo -e "\nChecking for online status... List will populate when complete..."
+fi
 echo ""
 
 for pi in "${pi_list[@]}"
@@ -114,23 +125,33 @@ do
     if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
     then
         unformatted_output+="${this_pi[alt_ip]}""* | "
-        if ping -c 1 "${this_pi[alt_ip]}" &> /dev/null
+        if [ "$quick_mode" = false ]
         then
-            pi_online="Online"
-            any_pi_online=true
+            if ping -c 1 "${this_pi[alt_ip]}" &> /dev/null
+            then
+                pi_online="Online"
+                any_pi_online=true
+            fi
         fi
     else
         unformatted_output+="${this_pi[ip_address]}"" | "
-        if ping -c 1 "${this_pi[ip_address]}" &> /dev/null
+        if [ "$quick_mode" = false ]
         then
-            pi_online="Online"
-            any_pi_online=true
+            if ping -c 1 "${this_pi[ip_address]}" &> /dev/null
+            then
+                pi_online="Online"
+                any_pi_online=true
+            fi
         fi
     fi
 
     unformatted_output+="${this_pi[pi_model]}"" | "
     unformatted_output+="${this_pi[pi_os]}"" | "
-    unformatted_output+="$pi_online"" | "
+
+    if [ "$quick_mode" = false ]
+    then
+        unformatted_output+="$pi_online"" | "
+    fi
 
     if [ ! -z "${this_pi[pi_info]}" ]
     then
@@ -141,7 +162,7 @@ done
 echo "$unformatted_output" | column -t
 echo ""
 
-if [ "$any_pi_online" = false ]
+if [ "$any_pi_online" = false -a "$quick_mode" = false ]
 then
     echo -e "No Raspberry Pi Online. Quitting\n"
     exit 0
