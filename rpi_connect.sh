@@ -77,6 +77,7 @@ declare unformatted_output=""
 use_sftp=false
 use_sftpr=false
 alt_mode=false
+any_pi_online=false
 
 for inp in "$@"
 do
@@ -94,36 +95,42 @@ do
     fi
 done
 
-if [ "$use_sftpr" = true ]
-then
-    echo -e "\nEnter a letter to SFTP into Raspberry Pi, with Recursive mode on"
-elif [ "$use_sftp" = true ]
-then
-    echo -e "\nEnter a letter to SFTP into Raspberry Pi"
-else
-    echo -e "\nEnter a letter to SSH into Raspberry Pi"
-    echo -e "You can also restart with the following arguments:"
-    echo -e "    -f to use SFTP"
-    echo -e "    -fr to use SFTP with recursive mode on"
-    echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
-fi
-
+echo -e "\nWelcome to Raspberry Pi Quick Connect"
+echo -e "You can start the progran with the following arguments:"
+echo -e "    -f to use SFTP"
+echo -e "    -fr to use SFTP with recursive mode on"
+echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
+echo -e "\nChecking for online status... List will populate when complete..."
 echo ""
+
 for pi in "${pi_list[@]}"
 do
     declare -n this_pi="$pi"
+    pi_online="-"
+
     unformatted_output+=" | ""${this_pi[con_code]}"" | "
     unformatted_output+="${this_pi[pi_name]}"" | "
 
     if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
     then
         unformatted_output+="${this_pi[alt_ip]}""* | "
+        if ping -c 1 "${this_pi[alt_ip]}" &> /dev/null
+        then
+            pi_online="Online"
+            any_pi_online=true
+        fi
     else
         unformatted_output+="${this_pi[ip_address]}"" | "
+        if ping -c 1 "${this_pi[ip_address]}" &> /dev/null
+        then
+            pi_online="Online"
+            any_pi_online=true
+        fi
     fi
 
     unformatted_output+="${this_pi[pi_model]}"" | "
     unformatted_output+="${this_pi[pi_os]}"" | "
+    unformatted_output+="$pi_online"" | "
 
     if [ ! -z "${this_pi[pi_info]}" ]
     then
@@ -133,6 +140,22 @@ do
 done
 echo "$unformatted_output" | column -t
 echo ""
+
+if [ "$any_pi_online" = false ]
+then
+    echo -e "No Raspberry Pi Online. Quitting\n"
+    exit 0
+else
+    if [ "$use_sftpr" = true ]
+    then
+        echo -e "Enter a letter to SFTP into Raspberry Pi, with Recursive mode on"
+    elif [ "$use_sftp" = true ]
+    then
+        echo -e "Enter a letter to SFTP into Raspberry Pi"
+    else
+    echo -e "Enter a letter to SSH into Raspberry Pi"
+    fi
+fi
 
 pi_found=false
 
@@ -167,7 +190,7 @@ done
 
 if [ "$pi_found" = false ]
 then
-    echo -e "\nNo matching Pi. Quitting"
+    echo -e "\nNo matching Pi. Quitting\n"
     exit 0
 fi
 
