@@ -74,6 +74,10 @@ declare -A selected_pi=(
     )
 
 declare unformatted_output=""
+declare online_status="Checking Pi online status"
+declare loading_dots=""
+declare return_line="\r"
+
 use_sftp=false
 use_sftpr=false
 alt_mode=false
@@ -107,19 +111,23 @@ do
     fi
 done
 
-echo -e "\nWelcome to Raspberry Pi Quick Connect"
-echo -e "You can start the progran with the following arguments:"
-echo -e "    -f to use SFTP (for file transfers)"
-echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
-echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
-echo -e "    -q to use quick mode (won't check for Pi online status)"
-echo -e "    -c to use compact mode (limited table info, good for small screens)"
+if [ "$compact_mode" = false ]
+then
+    echo -e "\nWelcome to Raspberry Pi Quick Connect\n"
+    echo -e "You can start the progran with the following arguments:\n"
+    echo -e "    -f to use SFTP (for file transfers)"
+    echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
+    echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
+    echo -e "    -q to use quick mode (won't check for Pi online status)"
+    echo -e "    -c to use compact mode (limited info, good for small screens)\n"
+else
+    echo -e "\nRaspberry Pi Quick Connect\n"
+fi
 
 if [ "$quick_mode" = false ]
 then
-    echo -e "\nChecking for online status... List will populate when complete..."
+    echo -e -n $online_status$loading_dots$return_line
 fi
-echo ""
 
 for pi in "${pi_list[@]}"
 do
@@ -137,6 +145,8 @@ do
         fi
         if [ "$quick_mode" = false ]
         then
+            loading_dots+="."
+            echo -e -n $online_status$loading_dots$return_line
             if ping -c 1 "${this_pi[alt_ip]}" &> /dev/null
             then
                 pi_online="Online"
@@ -150,6 +160,8 @@ do
         fi
         if [ "$quick_mode" = false ]
         then
+            loading_dots+="."
+            echo -e -n $online_status$loading_dots$return_line
             if ping -c 1 "${this_pi[ip_address]}" &> /dev/null
             then
                 pi_online="Online"
@@ -180,17 +192,32 @@ echo ""
 
 if [ "$any_pi_online" = false -a "$quick_mode" = false ]
 then
-    echo -e "No Raspberry Pi Online. Quitting\n"
+    echo -e "No Pi Online. Quitting\n"
     exit 0
 else
     if [ "$use_sftpr" = true ]
     then
-        echo -e "Enter a letter to SFTP into Raspberry Pi, with Recursive mode on"
+        if [ "$compact_mode" = false ]
+        then
+            echo -e "Enter a letter to SFTP into Raspberry Pi, with Recursive mode on"
+        else
+            echo -e "Enter a letter to use sftp -r"
+        fi
     elif [ "$use_sftp" = true ]
     then
-        echo -e "Enter a letter to SFTP into Raspberry Pi"
+        if [ "$compact_mode" = false ]
+        then
+            echo -e "Enter a letter to SFTP into Raspberry Pi"
+        else
+            echo -e "Enter a letter to use sftp"
+        fi
     else
-    echo -e "Enter a letter to SSH into Raspberry Pi"
+        if [ "$compact_mode" = false ]
+        then
+            echo -e "Enter a letter to SSH into Raspberry Pi"
+        else
+            echo -e "Enter a letter to use ssh"
+        fi
     fi
 fi
 
