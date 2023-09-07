@@ -114,7 +114,7 @@ done
 if [ "$compact_mode" = false ]
 then
     echo -e "\nWelcome to Raspberry Pi Quick Connect\n"
-    echo -e "You can start the progran with the following arguments:\n"
+    echo -e "You can start the program with the following arguments:\n"
     echo -e "    -f to use SFTP (for file transfers)"
     echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
     echo -e "    -a to use alt ip addresses, if available (alt addresses marked with *)"
@@ -254,7 +254,11 @@ done
 
 if [ "$pi_found" = false ]
 then
-    echo -e "\nNo matching Pi. Quitting\n"
+    if [ -n "$letter" ]
+    then
+        echo ""
+    fi
+    echo -e "No matching Pi. Quitting\n"
     exit 0
 fi
 
