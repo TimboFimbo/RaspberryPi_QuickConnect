@@ -73,6 +73,12 @@ declare -A selected_pi=(
     [pi_info]="" 
     )
 
+RED="\e[1;31m"
+GREEN="\e[1;32m"
+CYAN="\e[1;36m"
+YELLOW="\e[1;33m"
+WHITE="\e[0;38m"
+
 declare unformatted_output=""
 declare online_status="Checking Pi online status"
 declare loading_dots=""
@@ -113,7 +119,7 @@ done
 
 if [ "$compact_mode" = false ]
 then
-    echo -e "\nWelcome to Raspberry Pi Quick Connect\n"
+    echo -e "${YELLOW}\nWelcome to Raspberry Pi Quick Connect${WHITE}\n"
     echo -e "You can start the program with the following arguments:\n"
     echo -e "    -f to use SFTP (for file transfers)"
     echo -e "    -fr to use SFTP with recursive mode on (for folder transfers)"
@@ -121,7 +127,7 @@ then
     echo -e "    -q to use quick mode (won't check for Pi online status)"
     echo -e "    -c to use compact mode (limited info, good for small screens)\n"
 else
-    echo -e "\nRaspberry Pi Quick Connect\n"
+    echo -e "${YELLOW}\nRaspberry Pi Quick Connect${WHITE}\n"
 fi
 
 if [ "$quick_mode" = false ]
@@ -133,15 +139,13 @@ for pi in "${pi_list[@]}"
 do
     declare -n this_pi="$pi"
     pi_online="-"
-
-    unformatted_output+=" | ""${this_pi[con_code]}"" | "
-    unformatted_output+="${this_pi[pi_name]}"" | "
+    pi_ip=""
 
     if [ "$alt_mode" = true -a -n "${this_pi[alt_ip]}" ]
     then
         if [ "$compact_mode" = false ]
         then
-            unformatted_output+="${this_pi[alt_ip]}""* | "
+            pi_ip="${this_pi[alt_ip]}*"
         fi
         if [ "$quick_mode" = false ]
         then
@@ -156,7 +160,7 @@ do
     else
         if [ "$compact_mode" = false ]
         then
-            unformatted_output+="${this_pi[ip_address]}"" | "
+            pi_ip="${this_pi[ip_address]}"
         fi
         if [ "$quick_mode" = false ]
         then
@@ -170,24 +174,45 @@ do
         fi
     fi
 
+    if [ "$quick_mode" = false ]
+    then
+        if [ "$pi_online" = "Online" ]
+        then 
+            unformatted_output+="${GREEN}"
+        else 
+            unformatted_output+="${RED}"
+        fi
+    else 
+        unformatted_output+="${CYAN}"
+    fi
+
+
+    unformatted_output+=" | "" ${this_pi[con_code]}""^|"
+    unformatted_output+="  ${this_pi[pi_name]}""^|"
     if [ "$compact_mode" = false ]
     then
-        unformatted_output+="${this_pi[pi_model]}"" | "
-        unformatted_output+="${this_pi[pi_os]}"" | "
+        unformatted_output+="  $pi_ip""^|"
+    fi
+
+    if [ "$compact_mode" = false ]
+    then
+        unformatted_output+="  ${this_pi[pi_model]}""^ | "
+        unformatted_output+="  ${this_pi[pi_os]}""^ | "
     fi
 
     if [ "$quick_mode" = false ]
     then
-        unformatted_output+="$pi_online"" | "
+        unformatted_output+="  $pi_online""^ | "
     fi
 
     if [ "$compact_mode" = false -a -n "${this_pi[pi_info]}" ]
     then
-        unformatted_output+="${this_pi[pi_info]}"" | "
+        unformatted_output+="  ${this_pi[pi_info]}""^ |"
     fi
+    unformatted_output+="${WHITE}"
     unformatted_output+=$'\n'
 done
-echo "$unformatted_output" | column -t
+printf "$unformatted_output" | column -ts $'^'
 echo ""
 
 if [ "$any_pi_online" = false -a "$quick_mode" = false ]
